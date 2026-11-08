@@ -163,7 +163,8 @@ bool SDInterface::initSD() {
       Serial.println(F("Using external SPI configuration..."));
       this->spiExt->begin(SPI_SCK, SPI_MISO, SPI_MOSI, SD_CS);
       if (!SD.begin(SD_CS, *(this->spiExt))) {
-    #elif defined(HAS_C5_SD)
+        #elif defined(HAS_C5_SD) || defined(ESP32_S3_MINI)
+      if (!SD.begin(SD_CS, SPI, 20000000)) {
       if (!SD.begin(SD_CS, *_spi)) {
     #else
       if (!SD.begin(SD_CS)) {
