@@ -7,37 +7,17 @@
 
   //// BOARD TARGETS
   //#define MARAUDER_M5STICKC
-  //#define MARAUDER_M5STICKCP2
-  //#define MARAUDER_M5STACK_CORE2_AWS
   //#define MARAUDER_MINI
   //#define MARAUDER_V4
   //#define MARAUDER_V6
   //#define MARAUDER_V6_1
-  //#define MARAUDER_V7
-  //#define MARAUDER_V7_1
   //#define MARAUDER_KIT
   //#define GENERIC_ESP32
   //#define MARAUDER_FLIPPER
-  //#define MARAUDER_MULTIBOARD_S3
   //#define ESP32_LDDB
   //#define MARAUDER_DEV_BOARD_PRO
   //#define XIAO_ESP32_S3
-  //#define XIAO_ESP32_C5
   //#define MARAUDER_REV_FEATHER
-  //#define MARAUDER_CYD_MICRO // 2432S028
-  //#define MARAUDER_CYD_2USB // Another 2432S028 but it has tWo UsBs OoOoOoO
-  //#define MARAUDER_CYD_GUITION // ESP32-2432S024 GUITION
-  //#define MARAUDER_CYD_3_5_INCH
-  //#define MARAUDER_C5
-  //#define MARAUDER_T_DONGLE_C5
-  //#define MARAUDER_CARDPUTER
-  //#define MARAUDER_CARDPUTER_ADV
-  //#define MARAUDER_V8
-  //#define MARAUDER_PANCAKE
-  //#define MARAUDER_MINI_V3
-  //#define MARAUDER_M5_NANO_C6
-  //#define DUAL_MINI_C5
-  //#define MARAUDER_POOM
   #define ESP32_S3_MINI
   //// END BOARD TARGETS
 
@@ -55,9 +35,6 @@
   //// HARDWARE NAMES
   #ifdef ESP32_S3_MINI
     #define HARDWARE_NAME "ESP32-S3 N16R8 + ST7735"
-  #elif defined(MARAUDER_M5STICKC)
-    #define HARDWARE_NAME "M5Stick-C Plus"
-  // ... (other boards omitted for brevity, they remain in the full file)
   #else
     #define HARDWARE_NAME "ESP32"
   #endif
@@ -78,7 +55,6 @@
     #define HAS_IDF_3
     #define HAS_C5_SD // Forces SD sharing SPI with TFT
   #endif
-  // ... (other boards omitted for brevity)
 
   //// BUTTON DEFINITIONS
   #ifdef HAS_BUTTONS
@@ -106,7 +82,6 @@
       #define C_PULL true
       #define B_PULL true
     #endif
-    // ... (other boards omitted)
   #endif
   //// END BUTTON DEFINITIONS
 
@@ -160,8 +135,11 @@
       #define GREENBUTTON_W (FRAME_W/2)
       #define GREENBUTTON_H FRAME_H
       #define STATUSBAR_COLOR 0x4A49
+
+      // Packet monitor oscilloscope geometry
+      #define PKT_HALF    (HEIGHT_1 / 2)
+      #define PKT_AXIS_W  (WIDTH_1 - 10)
     #endif
-    // ... (other boards omitted)
   #endif
   //// END DISPLAY DEFINITIONS
 
@@ -190,7 +168,6 @@
       #define SD_MISO 41
       #define SD_MOSI 42
     #endif
-    // ... (other boards omitted)
   #endif
   //// END SD DEFINITIONS
 
@@ -214,6 +191,19 @@
     #endif
   #endif
   //// END NEOPIXEL STUFF
+
+  //// PCAP BUFFER STUFF
+  #ifdef HAS_PSRAM
+    #define BUF_SIZE 8 * 1024
+    #define SNAP_LEN 1 * 4096
+  #elif defined(MARAUDER_NO_PSRAM_MEMORY_PROFILE)
+    #define BUF_SIZE 2 * 1024
+    #define SNAP_LEN 1514
+  #else
+    #define BUF_SIZE 3 * 1024
+    #define SNAP_LEN 2324
+  #endif
+  //// END PCAP BUFFER STUFF
 
   //// MARAUDER TITLE STUFF
   #define MARAUDER_TITLE_BYTES 13578
