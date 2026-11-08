@@ -1227,7 +1227,6 @@ void MenuFunctions::main(uint32_t currentTime)
       #endif
 
       if(c_btn_press){
-		        if(c_btn_press){
         current_menu->list->get(current_menu->selected).callable();
       }
 
@@ -1255,7 +1254,6 @@ void MenuFunctions::main(uint32_t currentTime)
         }
       #endif
       // ===========================
-        current_menu->list->get(current_menu->selected).callable();
       }
 
     #endif
