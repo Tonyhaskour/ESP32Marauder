@@ -1227,6 +1227,34 @@ void MenuFunctions::main(uint32_t currentTime)
       #endif
 
       if(c_btn_press){
+		        if(c_btn_press){
+        current_menu->list->get(current_menu->selected).callable();
+      }
+
+      // === YOUR CUSTOM BUTTONS ===
+      #ifdef ESP32_S3_MINI
+        if (b_btn.justPressed()) {
+          if (current_menu->parentMenu != NULL) {
+            this->changeMenu(current_menu->parentMenu, true);
+          }
+          x = -1;
+          y = -1;
+          return;
+        }
+        if (s_btn.justPressed()) {
+          current_menu->list->get(current_menu->selected).callable();
+        }
+        if (x_btn.justPressed()) {
+          uint32_t pressed_at = millis();
+          while (!x_btn.justReleased()) {
+            if (millis() - pressed_at > 3000) {
+              ESP.restart();
+            }
+            delay(10);
+          }
+        }
+      #endif
+      // ===========================
         current_menu->list->get(current_menu->selected).callable();
       }
 
