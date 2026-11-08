@@ -1,0 +1,180 @@
+name: Build Marauder Firmware
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio
+
+    - name: Cache PlatformIO
+      uses: actions/cache@v4
+      with:
+        path: ~/.platformio
+        key: pio-${{ runner.os }}-${{ hashFiles('.github/workflows/build.yml') }}
+
+    - name: Patch configs.h and MenuFunctions.cpp
+      working-directory: esp32_marauder
+      run: |
+        # Remove the white screen flash
+        sed -i 's|display_obj.init();|// display_obj.init();|g' MenuFunctions.cpp
+
+    - name: Write lv_conf.h
+      working-directory: esp32_marauder
+      run: |
+        cat > lv_conf.h <<'EOF'
+        #ifndef LV_CONF_H
+        #define LV_CONF_H
+        #include <stdint.h>
+        typedef int16_t lv_coord_t;
+        #define LV_HOR_RES_MAX          (480)
+        #define LV_VER_RES_MAX          (320)
+        #define LV_COLOR_DEPTH     16
+        #define LV_COLOR_16_SWAP   0
+        #define LV_COLOR_SCREEN_TRANSP    0
+        #define LV_MEM_CUSTOM      0
+        #if LV_MEM_CUSTOM == 0
+        #  define LV_MEM_SIZE    (32U * 1024U)
+        #endif
+        #define LV_USE_GPU   0
+        #define LV_USE_FILESYSTEM   0
+        #define LV_USE_USER_DATA        0
+        #define LV_USE_PERF_MONITOR     0
+        #define LV_USE_MEM_MONITOR      0
+        #define LV_USE_LOG      0
+        #define LV_USE_DEBUG    1
+        #define LV_USE_ASSERT_NULL          1
+        #define LV_USE_ASSERT_MALLOC        1
+        #define LV_USE_ASSERT_OBJ           0
+        #define LV_USE_ASSERT_STYLE         0
+        #define LV_FONT_MONTSERRAT_14    1
+        #define LV_FONT_DEFAULT &lv_font_montserrat_14
+        #define LV_USE_ARC        1
+        #define LV_USE_BAR        1
+        #define LV_USE_BTN        1
+        #define LV_USE_BTNMATRIX  1
+        #define LV_USE_CANVAS     1
+        #define LV_USE_CHECKBOX   1
+        #define LV_USE_DROPDOWN   1
+        #define LV_USE_IMG        1
+        #define LV_USE_LABEL      1
+        #define LV_USE_LINE       1
+        #define LV_USE_ROLLER     1
+        #define LV_USE_SLIDER     1
+        #define LV_USE_SWITCH     1
+        #define LV_USE_TEXTAREA   1
+        #define LV_USE_TABLE      1
+        #endif
+        EOF
+
+    - name: Write platformio.ini
+      working-directory: esp32_marauder
+      run: |
+        cat > platformio.ini <<'EOF'
+        [platformio]
+        src_dir = .
+        default_envs = esp32-s3-marauder
+
+        [env:esp32-s3-marauder]
+        platform = espressif32@6.5.0
+        board = esp32-s3-devkitc-1
+        framework = arduino
+        monitor_speed = 115200
+
+        board_upload.flash_size = 16MB
+        board_build.flash_size = 16MB
+        board_build.arduino.memory_type = qio_opi
+        board_build.partitions = default_16MB.csv
+
+        lib_ldf_mode = deep+
+        lib_deps =
+            https://github.com/justcallmekoko/TFT_eSPI.git
+            https://github.com/ivanseidel/LinkedList.git
+            https://github.com/Bodmer/JPEGDecoder.git#1.8.0
+            https://github.com/lvgl/lv_arduino.git#3.0.0
+            h2zero/NimBLE-Arduino@~1.4.1
+            adafruit/Adafruit NeoPixel@^1.10.7
+            bblanchon/ArduinoJson@^6.21.5
+            fbiego/ESP32Time@^2.0.6
+            https://github.com/bigbrodude6119/ESPAsyncWebServer.git
+            https://github.com/me-no-dev/AsyncTCP.git
+            stevemarple/MicroNMEA@^2.0.6
+            plerup/EspSoftwareSerial@^8.2.0
+            bitbank2/AnimatedGIF@^1.4.7
+            knolleary/PubSubClient@^2.8
+
+        build_flags =
+            -w
+            -O2
+            -DBOARD_HAS_PSRAM
+            -DCORE_DEBUG_LEVEL=0
+            -DHAS_GPS
+            -Wl,-zmuldefs
+            -DLV_CONF_INCLUDE_SIMPLE
+            -I.
+            -I${platformio.packages_dir}/framework-arduinoespressif32/libraries/FS/src
+            -I${platformio.packages_dir}/framework-arduinoespressif32/libraries/SD_MMC/src
+            -I${platformio.packages_dir}/framework-arduinoespressif32/libraries/SD/src
+            -DUSER_SETUP_LOADED=1
+            -DST7735_DRIVER=1
+            -DST7735_BLACKTAB=1
+            -DTFT_WIDTH=128
+            -DTFT_HEIGHT=160
+            -DTFT_RGB_ORDER=TFT_RGB
+            -DCGRAM_OFFSET=1
+            -DTFT_MOSI=42
+            -DTFT_SCLK=40
+            -DTFT_MISO=41
+            -DTFT_CS=45
+            -DTFT_DC=21
+            -DTFT_RST=14
+            -DTFT_BL=2
+            -DTFT_BACKLIGHT_ON=HIGH
+            -DLOAD_GLCD=1
+            -DLOAD_FONT2=1
+            -DLOAD_FONT4=1
+            -DLOAD_FONT6=1
+            -DLOAD_FONT7=1
+            -DLOAD_FONT8=1
+            -DLOAD_GFXFF=1
+            -DSMOOTH_FONT=1
+            -DSPI_FREQUENCY=27000000
+            -DSPI_READ_FREQUENCY=20000000
+            -DSUPPORT_TRANSACTIONS=1
+        EOF
+
+    - name: Build firmware
+      working-directory: esp32_marauder
+      shell: bash
+      run: |
+        pio run -e esp32-s3-marauder 2>&1 | tee build.log
+
+    - name: Upload firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-bin
+        path: esp32_marauder/.pio/build/esp32-s3-marauder/firmware.bin
+        retention-days: 30
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: esp32_marauder/build.log
