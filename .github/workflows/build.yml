@@ -29,11 +29,51 @@ jobs:
         path: ~/.platformio
         key: pio-${{ runner.os }}-${{ hashFiles('.github/workflows/build.yml') }}
 
-    - name: Patch configs.h and MenuFunctions.cpp
+    - name: Automatically patch MenuFunctions.cpp syntax error
       working-directory: esp32_marauder
       run: |
-        # Remove the white screen flash
-        sed -i 's|display_obj.init();|// display_obj.init();|g' MenuFunctions.cpp
+        python -c '
+import re
+with open("MenuFunctions.cpp", "r") as f:
+    content = f.read()
+
+pattern = r"if\s*\(\s*c_btn_press\s*\)\s*\{\s*if\s*\(\s*c_btn_press\s*\)\s*\{\s*current_menu->list->get\(current_menu->selected\)\.callable\(\);\s*\}\s*// === YOUR CUSTOM BUTTONS ===\s*#ifdef ESP32_S3_MINI.*?current_menu->list->get\(current_menu->selected\)\.callable\(\);\s*\}"
+
+fixed_section = """if(c_btn_press){
+        current_menu->list->get(current_menu->selected).callable();
+      }
+
+      // === YOUR CUSTOM BUTTONS ===
+      #ifdef ESP32_S3_MINI
+        if (b_btn.justPressed()) {
+          if (current_menu->parentMenu != NULL) {
+            this->changeMenu(current_menu->parentMenu, true);
+          }
+          x = -1;
+          y = -1;
+          return;
+        }
+        if (s_btn.justPressed()) {
+          current_menu->list->get(current_menu->selected).callable();
+        }
+        if (x_btn.justPressed()) {
+          uint32_t pressed_at = millis();
+          while (!x_btn.justReleased()) {
+            if (millis() - pressed_at > 3000) {
+              ESP.restart();
+            }
+            delay(10);
+          }
+        }
+      #endif
+      // ===========================
+      }"""
+
+content = re.sub(pattern, fixed_section, content, flags=re.DOTALL)
+with open("MenuFunctions.cpp", "w") as f:
+    f.write(content)
+'
+        echo "Patched MenuFunctions.cpp successfully."
 
     - name: Write lv_conf.h
       working-directory: esp32_marauder
@@ -118,6 +158,7 @@ jobs:
             plerup/EspSoftwareSerial@^8.2.0
             bitbank2/AnimatedGIF@^1.4.7
             knolleary/PubSubClient@^2.8
+            https://github.com/marian-craciunescu/ESP32Ping.git
 
         build_flags =
             -w
