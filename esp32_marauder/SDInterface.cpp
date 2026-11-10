@@ -139,7 +139,15 @@ bool SDInterface::initSD() {
 
     delay(10);
     #if (defined(MARAUDER_M5STICKC)) || (defined(HAS_CYD_TOUCH)) || (defined(MARAUDER_CARDPUTER)) || (defined(MARAUDER_CARDPUTER_ADV))
-      /* Set up SPI SD Card using external pin header */
+      /* Set up SPI SD Card using external pin header
+      StickCPlus Header - SPI SD Card Reader
+                  3v3   -   3v3
+                  GND   -   GND
+                   G0   -   CLK
+              G36/G25   -   MISO
+                  G26   -   MOSI
+                        -   CS (jumper to SD Card GND Pin)
+      */
       #if defined(MARAUDER_M5STICKC)
         enum { SPI_SCK = 0, SPI_MISO = 36, SPI_MOSI = 26 };
       #elif defined(HAS_CYD_TOUCH) || defined(MARAUDER_CARDPUTER) || defined(MARAUDER_CARDPUTER_ADV) || defined(HAS_SEPARATE_SD)
@@ -155,7 +163,13 @@ bool SDInterface::initSD() {
       Serial.println(F("Using external SPI configuration..."));
       this->spiExt->begin(SPI_SCK, SPI_MISO, SPI_MOSI, SD_CS);
       if (!SD.begin(SD_CS, *(this->spiExt))) {
-    #elif defined(HAS_C5_SD) || defined(ESP32_S3_MINI)
+    #elif defined(ESP32_S3_MINI)
+      // The SD card shares the ST7735 SPI bus (SCLK/MISO/MOSI = TFT pins).
+      // Reuse the global SPI object: begin() is harmless if TFT_eSPI already started it,
+      // and puts the bus on the right pins if SD init ever runs first.
+      SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, -1);
+      if (!SD.begin(SD_CS, SPI, 20000000)) {
+    #elif defined(HAS_C5_SD)
       if (!SD.begin(SD_CS, *_spi)) {
     #else
       if (!SD.begin(SD_CS)) {
@@ -186,10 +200,12 @@ bool SDInterface::initSD() {
       }
 
       if (!SD.exists("/SCRIPTS")) {
+
         SD.mkdir("/SCRIPTS");
       }
 
       this->sd_files = new LinkedList<String>();
+    
       return true;
   }
 
@@ -201,6 +217,8 @@ bool SDInterface::initSD() {
 File SDInterface::getFile(String path) {
   if (this->supported) {
     File file = SD.open(path, FILE_READ);
+
+    //if (file)
     return file;
   }
 }
@@ -359,6 +377,10 @@ void SDInterface::listDir(String str_dir){
       {
         break;
       }
+      //for (uint8_t i = 0; i < numTabs; i++)
+      //{
+      //  Serial.print('\t');
+      //}
       Serial.print(entry.name());
       Serial.print("\t");
       Serial.println(entry.size());
@@ -430,6 +452,7 @@ void SDInterface::runUpdate(String file_name) {
 
     updateBin.close();
     
+      // whe finished remove the binary from sd card to indicate end of the process
     #ifdef HAS_SCREEN
       display_obj.tft.println(F(text_table2[3]));
     #endif
@@ -570,6 +593,7 @@ bool SDInterface::performUpdate(Stream &updateSource, size_t updateSize) {
       Serial.println(Update.getError());
       return false;
     }
+
   }
   else
   {
