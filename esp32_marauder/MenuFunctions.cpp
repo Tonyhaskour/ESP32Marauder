@@ -1,4 +1,10 @@
 #include "MenuFunctions.h"
+
+#if defined(ESP32_S3_MINI) && defined(HAS_BUTTONS)
+  extern Switches b_btn;
+  extern Switches s_btn;
+  extern Switches x_btn;
+#endif
 #include "MenuMarquee.h"
 #include "CommandLine.h"
 #include "OwnedListLifecycle.h"
@@ -604,6 +610,9 @@ void MenuFunctions::main(uint32_t currentTime)
 
     #if (C_BTN >= 0) && !defined(MARAUDER_CARDPUTER) && !defined(MARAUDER_CARDPUTER_ADV)
       bool c_btn_press = c_btn.justPressed();
+      #if defined(ESP32_S3_MINI) && (S_BTN >= 0)
+        if (s_btn.justPressed()) c_btn_press = true; // SELECT behaves like A
+      #endif
     #elif defined(HAS_FACES_KEYBOARD)
       bool c_btn_press = ((wifi_scan_obj.currentScanMode == WIFI_SCAN_OFF) ||
                           (wifi_scan_obj.currentScanMode == WIFI_CONNECTED) ||
@@ -1226,34 +1235,31 @@ void MenuFunctions::main(uint32_t currentTime)
       }
       #endif
 
+      #if defined(ESP32_S3_MINI)
+      #if (B_BTN >= 0)
+      // B = back to the parent menu (only while no scan is running; A/SELECT stop scans)
+      if (b_btn.justPressed() && wifi_scan_obj.currentScanMode == WIFI_SCAN_OFF &&
+          current_menu->parentMenu != NULL) {
+        this->changeMenu(current_menu->parentMenu, true);
+      }
+      #endif
+      #if (X_BTN >= 0)
+      // START: hold for 3 seconds to restart the device
+      if (x_btn.justPressed()) {
+        const uint32_t x_hold_start = millis();
+        while (!x_btn.justReleased()) {
+          x_btn.justPressed();
+          if (millis() - x_hold_start >= 3000) {
+            ESP.restart();
+          }
+          delay(10);
+        }
+      }
+      #endif
+      #endif
+
       if(c_btn_press){
         current_menu->list->get(current_menu->selected).callable();
-      }
-
-      // === YOUR CUSTOM BUTTONS ===
-      #ifdef ESP32_S3_MINI
-        if (b_btn.justPressed()) {
-          if (current_menu->parentMenu != NULL) {
-            this->changeMenu(current_menu->parentMenu, true);
-          }
-          x = -1;
-          y = -1;
-          return;
-        }
-        if (s_btn.justPressed()) {
-          current_menu->list->get(current_menu->selected).callable();
-        }
-        if (x_btn.justPressed()) {
-          uint32_t pressed_at = millis();
-          while (!x_btn.justReleased()) {
-            if (millis() - pressed_at > 3000) {
-              ESP.restart();
-            }
-            delay(10);
-          }
-        }
-      #endif
-      // ===========================
       }
 
     #endif
