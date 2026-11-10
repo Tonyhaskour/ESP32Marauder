@@ -9,6 +9,7 @@
   #define ESP32_S3_MINI
   //// END BOARD TARGETS
 
+  #define JSON_SETTING_SIZE 6144
   #define MARAUDER_VERSION "v1.20.0"
   #define GRAPH_REFRESH   100
   #define TRACK_EVICT_SEC 90
@@ -26,6 +27,11 @@
   #else
     #define HARDWARE_NAME "ESP32"
   #endif
+  //// END HARDWARE NAMES
+
+  //// FCC MODULE IDENTIFIERS
+  #define FCC_ID "See hardware label"
+  //// END FCC MODULE IDENTIFIERS
 
   //// BOARD FEATURES
   #ifdef ESP32_S3_MINI
@@ -220,6 +226,14 @@
   #endif
   #define mac_history_len_half (mac_history_len / 2)
   //// END GPS STUFF
+
+  //// WIFI STUFF
+  #ifndef HAS_DUAL_BAND
+    #define HOP_DELAY 1000
+  #else
+    #define HOP_DELAY 250
+  #endif
+  //// END WIFI STUFF
 
   //// PCAP BUFFER STUFF
   #ifdef HAS_PSRAM
