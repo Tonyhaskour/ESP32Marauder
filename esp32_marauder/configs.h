@@ -175,6 +175,27 @@
   #endif
   //// END SD DEFINITIONS
 
+  //// SPACE SAVING COLORS
+  #define TFTWHITE     1
+  #define TFTCYAN      2
+  #define TFTBLUE      3
+  #define TFTRED       4
+  #define TFTGREEN     5
+  #define TFTGREY      6
+  #define TFTGRAY      7
+  #define TFTMAGENTA   8
+  #define TFTVIOLET    9
+  #define TFTORANGE    10
+  #define TFTYELLOW    11
+  #define TFTLIGHTGREY 12
+  #define TFTPURPLE    13
+  #define TFTNAVY      14
+  #define TFTSILVER    15
+  #define TFTDARKGREY  16
+  #define TFTSKYBLUE   17
+  #define TFTLIME      18
+  //// END SPACE SAVING COLORS
+
   //// NEOPIXEL STUFF  
   #ifdef HAS_NEOPIXEL_LED
     #ifdef ESP32_S3_MINI
@@ -182,6 +203,23 @@
     #endif
   #endif
   //// END NEOPIXEL STUFF
+
+  //// EVIL PORTAL STUFF
+  #ifdef HAS_PSRAM
+    #define MAX_HTML_SIZE 30000
+  #else
+    #define MAX_HTML_SIZE 11400
+  #endif
+  //// END EVIL PORTAL STUFF
+
+  //// GPS STUFF (Needed for MAC history even if GPS is disabled)
+  #ifdef HAS_PSRAM
+    #define mac_history_len 500
+  #else
+    #define mac_history_len 100
+  #endif
+  #define mac_history_len_half (mac_history_len / 2)
+  //// END GPS STUFF
 
   //// PCAP BUFFER STUFF
   #ifdef HAS_PSRAM
