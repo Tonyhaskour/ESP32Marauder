@@ -117,7 +117,7 @@
 
       #define GRAPH_VERT_LIM (TFT_WIDTH / 2 - 1)
       #define EXT_BUTTON_WIDTH 0
-      #define SCREEN_ORIENTATION 3
+      #define SCREEN_ORIENTATION 1
       #define CHAR_WIDTH 6
       #define SCREEN_WIDTH TFT_HEIGHT   // 160 (landscape)
       #define SCREEN_HEIGHT TFT_WIDTH   // 128 (landscape)
